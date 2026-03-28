@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MicroSOC Command Center</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/light-theme.css" id="theme-style">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>MicroSOC Command Center</h1>
+                </div>
+                <p class="subtitle">Morphin Grid Security System</p>
+            </div>
+
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="ranger@morphingrid.com"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="••••••••"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-sign-in-alt"></i> Access Command Center
+                        </button>
+                        <a href="register.html" class="btn btn-outline btn-block">
+                            <i class="fas fa-user-plus"></i> Register New Account
+                        </a>
+                    </div>
+                </div>
+
+                <div class="demo-credentials">
+                    <p><strong>Demo Credentials:</strong></p>
+                    <p>Email: admin@morphingrid.com | Password: password123</p>
+                    <p>Email: analyst@morphingrid.com | Password: password123</p>
+                    <p class="warning"><i class="fas fa-exclamation-triangle"></i> Demo users are pre-created in the system</p>
+                </div>
+            </form>
+
+            <div class="login-footer">
+                <p>© 2024 Power Rangers Security Division</p>
+                <p class="warning"><i class="fas fa-exclamation-triangle"></i> Authorized personnel only</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Backend API URL
+        const API_BASE_URL = 'http://localhost:5001/api';
+        
+        // Initialize login functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            
+            // Auto-fill demo credentials
+            emailInput.value = 'admin@morphingrid.com';
+            passwordInput.value = 'password123';
+            
+            // Show loading state
+            function setLoading(isLoading) {
+                const submitBtn = loginForm.querySelector('button[type="submit"]');
+                if (isLoading) {
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+                    submitBtn.disabled = true;
+                } else {
+                    submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Access Command Center';
+                    submitBtn.disabled = false;
+                }
+            }
+            
+            // Show notification
+            function showNotification(message, type = 'error') {
+                // Remove existing notifications
+                const existingNotifications = document.querySelectorAll('.login-notification');
+                existingNotifications.forEach(notification => notification.remove());
+                
+                const notification = document.createElement('div');
+                notification.className = `login-notification notification-${type}`;
+                notification.innerHTML = `
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                    <span>${message}</span>
+                `;
+                
+                // Add styles
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    background: ${type === 'success' ? '#28a745' : '#dc3545'};
+                    color: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    animation: slideInRight 0.3s ease;
+                    max-width: 400px;
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => {
+                            if (notification.parentElement) {
+                                notification.remove();
+                            }
+                        }, 300);
+                    }
+                }, 5001);
+            }
+            
+            // Handle form submission
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = emailInput.value.trim();
+                const password = passwordInput.value.trim();
+                
+                // Validation
+                if (!email || !password) {
+                    showNotification('Please fill in all fields');
+                    return;
+                }
+                
+                if (!isValidEmail(email)) {
+                    showNotification('Please enter a valid email address');
+                    return;
+                }
+                
+                setLoading(true);
+                
+                try {
+                    // Call backend API
+                    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Store token and user info
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        
+                        // Show success message
+                        showNotification('Login successful! Redirecting...', 'success');
+                        
+                        // Redirect to dashboard after short delay
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                        
+                    } else {
+                        showNotification(data.message || 'Login failed. Please check your credentials.');
+                        setLoading(false);
+                    }
+                    
+                } catch (error) {
+                    console.error('Login error:', error);
+                    
+                    // Check if backend is running
+                    fetch(`${API_BASE_URL}/health`)
+                        .then(res => {
+                            if (!res.ok) {
+                                showNotification('Backend server is not responding. Please make sure the backend is running on localhost:5001');
+                            }
+                        })
+                        .catch(() => {
+                            showNotification('Cannot connect to backend server. Please make sure the backend is running on localhost:5001');
+                        });
+                    
+                    // Fallback to local storage (for demo/testing)
+                    if (email === 'admin@morphingrid.com' && password === 'password123') {
+                        const user = {
+                            email: email,
+                            role: 'admin',
+                            name: 'Red Ranger (Admin)',
+                            loggedIn: true
+                        };
+                        
+                        localStorage.setItem('user', JSON.stringify(user));
+                        showNotification('Using demo mode (backend not connected)', 'warning');
+                        
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                        
+                    } else if (email === 'analyst@morphingrid.com' && password === 'password123') {
+                        const user = {
+                            email: email,
+                            role: 'analyst',
+                            name: 'Blue Ranger (Analyst)',
+                            loggedIn: true
+                        };
+                        
+                        localStorage.setItem('user', JSON.stringify(user));
+                        showNotification('Using demo mode (backend not connected)', 'warning');
+                        
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                        
+                    } else {
+                        showNotification('Login failed. Please check your credentials or backend connection.');
+                    }
+                    
+                    setLoading(false);
+                }
+            });
+            
+            // Email validation function
+            function isValidEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+            
+            // Add CSS animations if not already present
+            if (!document.getElementById('notification-animations')) {
+                const style = document.createElement('style');
+                style.id = 'notification-animations';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    
+                    @keyframes slideOutRight {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Test backend connection on page load
+            window.addEventListener('load', async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/health`);
+                    if (response.ok) {
+                        console.log('Backend server is running');
+                    }
+                } catch (error) {
+                    console.warn('Backend server is not available. Using demo mode.');
+                }
+            });
+        });
+    </script>
+    
+    <style>
+        .form-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-outline:hover {
+            background: var(--card-bg);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .demo-credentials .warning {
+            color: var(--warning-color);
+            font-size: 12px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</body>
+</html>

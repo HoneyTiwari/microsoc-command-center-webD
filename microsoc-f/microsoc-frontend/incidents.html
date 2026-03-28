@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incidents - MicroSOC Command Center</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/light-theme.css" id="theme-style">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation Sidebar (Same as dashboard) -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h2>MicroSOC</h2>
+            </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <div class="user-info">
+            <div class="avatar">
+                <i class="fas fa-user-secret"></i>
+            </div>
+            <div class="user-details">
+                <h3 id="user-name">Red Ranger</h3>
+                <p id="user-role">Admin</p>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li>
+                    <a href="dashboard.html">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="incidents.html">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Incidents</span>
+                        <span class="badge badge-danger">12</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="logs.html">
+                        <i class="fas fa-stream"></i>
+                        <span>Logs</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="analytics.html">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="toggleTheme()">
+                        <i class="fas fa-moon"></i>
+                        <span>Theme</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <header class="main-header">
+            <div class="header-left">
+                <h1><i class="fas fa-exclamation-triangle"></i> Incident Management</h1>
+                <p class="subtitle">Monitor and manage security incidents</p>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-primary" onclick="openNewIncidentModal()">
+                    <i class="fas fa-plus"></i> New Incident
+                </button>
+                <div class="filter-controls">
+                    <select id="filter-status" onchange="filterIncidents()">
+                        <option value="all">All Status</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                    <select id="filter-severity" onchange="filterIncidents()">
+                        <option value="all">All Severity</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <!-- Incident Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #dc354520; color: #dc3545">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Open Incidents</h3>
+                    <div class="stat-value">8</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i> +2
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fd7e1420; color: #fd7e14">
+                    <i class="fas fa-skull-crossbones"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Critical</h3>
+                    <div class="stat-value">3</div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-arrow-up"></i> +1
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #007bff20; color: #007bff">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>In Progress</h3>
+                    <div class="stat-value">4</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-down"></i> -1
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #28a74520; color: #28a745">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Resolved Today</h3>
+                    <div class="stat-value">5</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i> +2
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incidents Table -->
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-list"></i> Active Incidents</h3>
+                    <input type="text" id="search-incidents" placeholder="Search incidents..." 
+                           onkeyup="searchIncidents()">
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="data-table" id="incidents-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Severity</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Incidents will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Incident Modal -->
+    <div id="new-incident-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus"></i> Create New Incident</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="new-incident-form">
+                    <div class="form-group">
+                        <label for="incident-title">Title</label>
+                        <input type="text" id="incident-title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="incident-description">Description</label>
+                        <textarea id="incident-description" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="incident-severity">Severity</label>
+                        <select id="incident-severity" required>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="incident-assignee">Assign To</label>
+                        <select id="incident-assignee">
+                            <option value="">Unassigned</option>
+                            <option value="Red Ranger">Red Ranger</option>
+                            <option value="Blue Ranger">Blue Ranger</option>
+                            <option value="Green Ranger">Green Ranger</option>
+                            <option value="Yellow Ranger">Yellow Ranger</option>
+                            <option value="Pink Ranger">Pink Ranger</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Incident</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/incidents.js"></script>
+    <script>
+        // Initialize incidents page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            const user = JSON.parse(localStorage.getItem('user'));
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Update user info
+            document.getElementById('user-name').textContent = user.name;
+            document.getElementById('user-role').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+            
+            // Load incidents
+            loadIncidents();
+            
+            // Setup new incident form
+            document.getElementById('new-incident-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                createNewIncident();
+            });
+        });
+    </script>
+</body>
+</html>

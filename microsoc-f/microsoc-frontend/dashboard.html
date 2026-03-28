@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MicroSOC Command Center</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/light-theme.css" id="theme-style">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h2>MicroSOC</h2>
+            </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <div class="user-info">
+            <div class="avatar">
+                <i class="fas fa-user-secret"></i>
+            </div>
+            <div class="user-details">
+                <h3 id="user-name">Loading...</h3>
+                <p id="user-role">Role: Loading...</p>
+                <p id="user-email" style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Loading...</p>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="active">
+                    <a href="dashboard.html">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="incidents.html">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Incidents</span>
+                        <span class="badge badge-danger" id="incident-count">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="logs.html">
+                        <i class="fas fa-stream"></i>
+                        <span>Logs</span>
+                        <span class="badge badge-warning" id="log-count">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="analytics.html">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                        <span>Theme</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="header-left">
+                <h1><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h1>
+                <p class="subtitle">Real-time security monitoring of the Morphin Grid</p>
+            </div>
+            <div class="header-right">
+                <div class="notification" onclick="showNotifications()">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge badge-danger" id="notification-count">0</span>
+                </div>
+                <div class="time-display">
+                    <i class="fas fa-clock"></i>
+                    <span id="current-time">--:--:--</span>
+                </div>
+                <div class="system-status" id="system-status">
+                    <i class="fas fa-circle status-active"></i>
+                    <span>System: <strong>Online</strong></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="stats-container">
+            <!-- Stats will be loaded dynamically -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #007bff20; color: #007bff">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Loading Stats...</h3>
+                    <div class="stat-value">--</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                </div>
+            </div>
+            <!-- Repeat for other stats -->
+        </div>
+
+        <!-- Charts Section -->
+        <div class="content-grid">
+            <!-- Attack Trends Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-line"></i> Attack Trends</h3>
+                    <select id="time-range" onchange="loadAttackTrends()">
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d" selected>Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                    </select>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="attackTrendsChart"></canvas>
+                    </div>
+                    <div id="chart-loading" style="text-align: center; padding: 20px;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading chart data...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attack Map -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-globe-americas"></i> Attack Map</h3>
+                    <button class="btn btn-sm btn-outline" onclick="refreshAttackMap()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="attack-map" style="height: 250px;">
+                        <div class="map-container" id="attack-map-container">
+                            <div id="map-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white;">
+                                <i class="fas fa-spinner fa-spin"></i> Loading attack map...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Logs -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-stream"></i> Real-time Logs</h3>
+                    <div class="log-controls">
+                        <button class="btn btn-sm btn-outline" onclick="toggleLogStream()" id="stream-toggle">
+                            <i class="fas fa-play"></i> Start Stream
+                        </button>
+                        <button class="btn btn-sm btn-outline" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="logs-container" id="realtime-logs" style="max-height: 250px; overflow-y: auto;">
+                        <div class="log-entry">
+                            <div class="log-icon" style="color: #17a2b8">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="log-content">
+                                <strong>System</strong> Initializing real-time log stream...
+                                <div class="log-meta">
+                                    <span class="log-time" id="log-time">Just now</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Attackers -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-list-ol"></i> Top Attackers</h3>
+                    <button class="btn btn-sm btn-outline" onclick="loadTopAttackers()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Country</th>
+                                    <th>Attacks</th>
+                                    <th>Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-attackers">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px;">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading top attackers...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Profile Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-secret"></i> My Profile</h3>
+                    <button class="btn btn-sm btn-outline" onclick="refreshProfile()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="profile-info">
+                        <div class="avatar-large">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        <div class="profile-details">
+                            <h4 id="profile-name">Loading...</h4>
+                            <p id="profile-role">Role: Loading...</p>
+                            <p id="profile-email">Email: Loading...</p>
+                            <p id="profile-last-login">Last Login: Loading...</p>
+                            <p id="profile-login-count" style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                <i class="fas fa-sign-in-alt"></i> Login count: Loading...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-heartbeat"></i> System Health</h3>
+                    <span class="badge badge-success" id="health-status">Healthy</span>
+                </div>
+                <div class="card-body">
+                    <div class="health-metrics">
+                        <div class="health-metric">
+                            <div class="metric-label">Backend API</div>
+                            <div class="metric-value">
+                                <span class="status-indicator status-good" id="backend-status"></span>
+                                <span id="backend-response">Checking...</span>
+                            </div>
+                        </div>
+                        <div class="health-metric">
+                            <div class="metric-label">Database</div>
+                            <div class="metric-value">
+                                <span class="status-indicator" id="db-status"></span>
+                                <span id="db-response">Checking...</span>
+                            </div>
+                        </div>
+                        <div class="health-metric">
+                            <div class="metric-label">Log Processing</div>
+                            <div class="metric-value">
+                                <span class="status-indicator status-good" id="log-status"></span>
+                                <span>Active</span>
+                            </div>
+                        </div>
+                        <div class="health-metric">
+                            <div class="metric-label">Alert System</div>
+                            <div class="metric-value">
+                                <span class="status-indicator status-good" id="alert-status"></span>
+                                <span>Enabled</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="health-actions">
+                        <button class="btn btn-sm btn-outline" onclick="checkSystemHealth()">
+                            <i class="fas fa-stethoscope"></i> Run Health Check
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notifications-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> Notifications</h3>
+                <button class="close-modal" onclick="closeNotifications()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="notifications-list">
+                    <div class="notification-item">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="notification-content">
+                            <div class="notification-title">Loading notifications...</div>
+                            <div class="notification-time">Just now</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="markAllAsRead()">Mark All as Read</button>
+                <button class="btn btn-primary" onclick="closeNotifications()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>
+        // Backend API URL
+        const API_BASE_URL = 'http://localhost:5001/api';
+        let isStreaming = false;
+        let logStreamInterval = null;
+        let attackTrendsChart = null;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            const user = JSON.parse(localStorage.getItem('user'));
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Update user info in sidebar
+            updateUserInfo(user);
+            
+            // Initialize dashboard
+            initDashboard();
+            
+            // Update time every second
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Load dashboard data
+            loadDashboardData();
+            
+            // Check system health
+            checkSystemHealth();
+            
+            // Load notifications
+            loadNotifications();
+        });
+        
+        // Update user info
+        function updateUserInfo(user,token) {
+            document.getElementById('user-name').textContent = user.name || 'User';
+            document.getElementById('user-role').textContent = `Role: ${user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}`;
+            if (user.email) {
+                document.getElementById('user-email').textContent = user.email;
+            }
+            
+            // Update profile card
+            document.getElementById('profile-name').textContent = user.name || 'User';
+            document.getElementById('profile-role').textContent = `Role: ${user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}`;
+            document.getElementById('profile-email').textContent = `Email: ${user.email || 'Not available'}`;
+            document.getElementById('profile-last-login').textContent = `Last Login: ${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Just now'}`;
+            
+            // Try to get user details from backend
+            if (token) {
+                fetchUserDetails();
+            }
+        }
+        
+        // Fetch user details from backend
+        async function fetchUserDetails() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        // Update user info with backend data
+                        localStorage.setItem('user', JSON.stringify({
+                            ...JSON.parse(localStorage.getItem('user')),
+                            ...data.user
+                        }));
+                        updateUserInfo(data.user);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch user details:', error);
+            }
+        }
+        
+        // Initialize dashboard
+        async function initDashboard() {
+            // Load initial data
+            await Promise.all([
+                loadStats(),
+                loadAttackTrends(),
+                loadTopAttackers(),
+                loadAttackMap(),
+                startLogStream()
+            ]);
+            
+            // Update theme icon
+            updateThemeIcon();
+        }
+        
+        // Load all dashboard data
+        async function loadDashboardData() {
+            try {
+                await Promise.all([
+                    loadStats(),
+                    loadAttackTrends(),
+                    loadTopAttackers(),
+                    loadAttackMap()
+                ]);
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showNotification('Failed to load dashboard data. Using demo data.', 'warning');
+                // Fallback to mock data
+                loadMockData();
+            }
+        }
+        
+        // Load stats from backend
+        async function loadStats() {
+            const token = localStorage.getItem('token');
+            const container = document.getElementById('stats-container');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        renderStats(data.stats);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load stats from backend:', error);
+            }
+            
+            // Fallback to local data
+            loadLocalStats();
+        }
+        
+        // Load local stats (fallback)
+        function loadLocalStats() {
+            const stats = [
+                {
+                    icon: 'fa-broadcast-tower',
+                    title: 'Total Logs',
+                    value: '12,478',
+                    change: '+3.2%',
+                    changeType: 'negative',
+                    color: '#007bff'
+                },
+                {
+                    icon: 'fa-exclamation-triangle',
+                    title: 'Active Incidents',
+                    value: '23',
+                    change: '+2',
+                    changeType: 'negative',
+                    color: '#dc3545'
+                },
+                {
+                    icon: 'fa-skull-crossbones',
+                    title: 'Critical Threats',
+                    value: '5',
+                    change: '+1',
+                    changeType: 'negative',
+                    color: '#fd7e14'
+                },
+                {
+                    icon: 'fa-clock',
+                    title: 'Avg Response Time',
+                    value: '2.4h',
+                    change: '-0.5h',
+                    changeType: 'positive',
+                    color: '#28a745'
+                },
+                {
+                    icon: 'fa-shield-alt',
+                    title: 'Attack Prevention',
+                    value: '94%',
+                    change: '+2%',
+                    changeType: 'positive',
+                    color: '#17a2b8'
+                },
+                {
+                    icon: 'fa-network-wired',
+                    title: 'Unique Sources',
+                    value: '189',
+                    change: '+12',
+                    changeType: 'negative',
+                    color: '#6c757d'
+                }
+            ];
+            
+            renderStats(stats);
+        }
+        
+        // Render stats cards
+        function renderStats(stats) {
+            const container = document.getElementById('stats-container');
+            if (!container) return;
+            
+            container.innerHTML = stats.map(stat => `
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: ${stat.color}20; color: ${stat.color}">
+                        <i class="fas ${stat.icon}"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${stat.title}</h3>
+                        <div class="stat-value">${stat.value}</div>
+                        <div class="stat-change ${stat.changeType}">
+                            <i class="fas fa-arrow-${stat.changeType === 'positive' ? 'down' : 'up'}"></i>
+                            ${stat.change}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Load attack trends chart
+        async function loadAttackTrends() {
+            const token = localStorage.getItem('token');
+            const timeRange = document.getElementById('time-range').value;
+            const loadingElement = document.getElementById('chart-loading');
+            const canvas = document.getElementById('attackTrendsChart');
+            
+            if (loadingElement) loadingElement.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/threat-timeline?timeRange=${timeRange}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.timeline) {
+                        renderAttackTrendsChart(data.timeline);
+                        if (loadingElement) loadingElement.style.display = 'none';
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load attack trends:', error);
+            }
+            
+            // Fallback to mock data
+            loadMockAttackTrends();
+            if (loadingElement) loadingElement.style.display = 'none';
+        }
+        
+        // Render attack trends chart
+        function renderAttackTrendsChart(timelineData) {
+            const ctx = document.getElementById('attackTrendsChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (attackTrendsChart) {
+                attackTrendsChart.destroy();
+            }
+            
+            attackTrendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timelineData.labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: timelineData.datasets || [
+                        {
+                            label: 'Critical',
+                            data: [5, 8, 3, 12, 7, 4, 9],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'High',
+                            data: [12, 15, 10, 18, 14, 11, 16],
+                            borderColor: '#fd7e14',
+                            backgroundColor: 'rgba(253, 126, 20, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Load mock attack trends (fallback)
+        function loadMockAttackTrends() {
+            const mockData = {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [
+                    {
+                        label: 'Critical',
+                        data: [5, 8, 3, 12, 7, 4, 9],
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'High',
+                        data: [12, 15, 10, 18, 14, 11, 16],
+                        borderColor: '#fd7e14',
+                        backgroundColor: 'rgba(253, 126, 20, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Medium',
+                        data: [25, 28, 22, 30, 26, 24, 29],
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            };
+            
+            renderAttackTrendsChart(mockData);
+        }
+        
+        // Load attack map
+        async function loadAttackMap() {
+            const token = localStorage.getItem('token');
+            const container = document.getElementById('attack-map-container');
+            const loadingElement = document.getElementById('map-loading');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/top-attackers?limit=10`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.topAttackers) {
+                        renderAttackMap(data.topAttackers);
+                        if (loadingElement) loadingElement.style.display = 'none';
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load attack map:', error);
+            }
+            
+            // Fallback to static map
+            renderStaticAttackMap();
+            if (loadingElement) loadingElement.style.display = 'none';
+        }
+        
+        // Render attack map
+        function renderAttackMap(attackers) {
+            const container = document.getElementById('attack-map-container');
+            if (!container) return;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Map positions (simplified for demo)
+            const positions = [
+                { top: '30%', left: '25%', country: 'USA' },
+                { top: '35%', left: '75%', country: 'China' },
+                { top: '25%', left: '65%', country: 'Russia' },
+                { top: '40%', left: '48%', country: 'Germany' },
+                { top: '45%', left: '70%', country: 'India' },
+                { top: '55%', left: '30%', country: 'Brazil' },
+                { top: '40%', left: '85%', country: 'Japan' }
+            ];
+            
+            // Create map points
+            attackers.slice(0, Math.min(attackers.length, positions.length)).forEach((attacker, index) => {
+                const position = positions[index % positions.length];
+                const point = document.createElement('div');
+                point.className = 'map-point';
+                point.style.cssText = `
+                    position: absolute;
+                    top: ${position.top};
+                    left: ${position.left};
+                    width: 20px;
+                    height: 20px;
+                    cursor: pointer;
+                `;
+                
+                const pulse = document.createElement('div');
+                pulse.className = 'pulse';
+                pulse.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    background: ${getSeverityColor(attacker.severity || 'medium')};
+                    border-radius: 50%;
+                    animation: pulse 2s infinite;
+                    position: relative;
+                `;
+                
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = `${position.country}: ${attacker.count || 0} attacks`;
+                
+                point.appendChild(pulse);
+                point.appendChild(tooltip);
+                container.appendChild(point);
+            });
+        }
+        
+        // Render static attack map (fallback)
+        function renderStaticAttackMap() {
+            const container = document.getElementById('attack-map-container');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div class="map-point" style="top: 30%; left: 25%;">
+                    <div class="pulse"></div>
+                    <div class="tooltip">USA: 245 attacks</div>
+                </div>
+                <div class="map-point" style="top: 35%; left: 75%;">
+                    <div class="pulse"></div>
+                    <div class="tooltip">China: 189 attacks</div>
+                </div>
+                <div class="map-point" style="top: 25%; left: 65%;">
+                    <div class="pulse"></div>
+                    <div class="tooltip">Russia: 156 attacks</div>
+                </div>
+                <div class="map-point" style="top: 40%; left: 48%;">
+                    <div class="pulse"></div>
+                    <div class="tooltip">Germany: 98 attacks</div>
+                </div>
+                <div class="map-point" style="top: 45%; left: 75%;">
+                    <div class="pulse"></div>
+                    <div class="tooltip">India: 134 attacks</div>
+                </div>
+            `;
+        }
+        
+        // Refresh attack map
+        function refreshAttackMap() {
+            loadAttackMap();
+        }
+        
+        // Load top attackers
+        async function loadTopAttackers() {
+            const token = localStorage.getItem('token');
+            const container = document.getElementById('top-attackers');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/top-attackers?limit=5`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.topAttackers) {
+                        renderTopAttackers(data.topAttackers);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load top attackers:', error);
+            }
+            
+            // Fallback to mock data
+            loadMockTopAttackers();
+        }
+        
+        // Render top attackers
+        function renderTopAttackers(attackers) {
+            const container = document.getElementById('top-attackers');
+            if (!container) return;
+            
+            if (!attackers || attackers.length === 0) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px;">
+                            <i class="fas fa-info-circle"></i> No attack data available
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            container.innerHTML = attackers.map(attacker => `
+                <tr>
+                    <td class="ip-address">${attacker.ip || attacker._id || 'Unknown'}</td>
+                    <td>
+                        <i class="fas fa-globe-americas"></i>
+                        ${attacker.country || 'Unknown'}
+                    </td>
+                    <td>
+                        <span class="badge badge-danger">${attacker.count || 0}</span>
+                    </td>
+                    <td class="timestamp">
+                        ${attacker.lastSeen ? formatDate(attacker.lastSeen) : 'Unknown'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Load mock top attackers (fallback)
+        function loadMockTopAttackers() {
+            const mockAttackers = [
+                { ip: '192.168.1.105', country: 'USA', count: 245, lastSeen: new Date(Date.now() - 3600000) },
+                { ip: '10.0.0.42', country: 'China', count: 189, lastSeen: new Date(Date.now() - 7200000) },
+                { ip: '172.16.0.88', country: 'Russia', count: 156, lastSeen: new Date(Date.now() - 10800000) },
+                { ip: '203.0.113.25', country: 'Germany', count: 98, lastSeen: new Date(Date.now() - 14400000) },
+                { ip: '198.51.100.13', country: 'India', count: 134, lastSeen: new Date(Date.now() - 18000000) }
+            ];
+            
+            renderTopAttackers(mockAttackers);
+        }
+        
+        // Start/stop log stream
+        function toggleLogStream() {
+            const button = document.getElementById('stream-toggle');
+            if (isStreaming) {
+                pauseLogStream();
+                button.innerHTML = '<i class="fas fa-play"></i> Start Stream';
+            } else {
+                startLogStream();
+                button.innerHTML = '<i class="fas fa-pause"></i> Pause Stream';
+            }
+        }
+        
+        // Start log stream
+        async function startLogStream() {
+            if (isStreaming) return;
+            
+            isStreaming = true;
+            const token = localStorage.getItem('token');
+            const container = document.getElementById('realtime-logs');
+            
+            // Clear existing logs
+            container.innerHTML = '';
+            
+            try {
+                // Try to connect to backend SSE endpoint
+                const eventSource = new EventSource(`${API_BASE_URL}/logs/stream`);
+                
+                eventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'new' && data.log) {
+                        addLogToStream(data.log);
+                    }
+                };
+                
+                eventSource.onerror = function() {
+                    console.warn('SSE connection failed, falling back to mock logs');
+                    eventSource.close();
+                    startMockLogStream();
+                };
+                
+                // Store event source for cleanup
+                window.logEventSource = eventSource;
+                
+            } catch (error) {
+                console.error('Failed to connect to log stream:', error);
+                // Fallback to mock stream
+                startMockLogStream();
+            }
+        }
+        
+        // Start mock log stream (fallback)
+        function startMockLogStream() {
+            if (logStreamInterval) clearInterval(logStreamInterval);
+            
+            // Initial logs
+            generateMockLogs(5);
+            
+            // Add new log every 5 seconds
+            logStreamInterval = setInterval(() => {
+                if (isStreaming) {
+                    generateMockLogs(1);
+                }
+            }, 5001);
+        }
+        
+        // Generate mock logs
+        function generateMockLogs(count) {
+            const container = document.getElementById('realtime-logs');
+            const attackTypes = ['XSS', 'SQL Injection', 'Port Scan', 'Brute Force', 'DDoS', 'Malware'];
+            const severities = ['low', 'medium', 'high', 'critical'];
+            
+            for (let i = 0; i < count; i++) {
+                const attackType = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+                const severity = severities[Math.floor(Math.random() * severities.length)];
+                const ip = generateIP();
+                
+                const log = {
+                    attackType,
+                    severity,
+                    sourceIP: ip,
+                    description: `${attackType} attack detected from ${ip}`,
+                    timestamp: new Date().toISOString()
+                };
+                
+                addLogToStream(log);
+            }
+        }
+        
+        // Add log to stream display
+        function addLogToStream(log) {
+            const container = document.getElementById('realtime-logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <div class="log-icon" style="color: ${getSeverityColor(log.severity)}">
+                    <i class="fas ${getAttackTypeIcon(log.attackType)}"></i>
+                </div>
+                <div class="log-content">
+                    <strong>${log.attackType}</strong> attack detected
+                    <div class="log-meta">
+                        <span class="log-ip">${log.sourceIP}</span>
+                        <span class="log-severity badge" style="background: ${getSeverityColor(log.severity)}">${log.severity.toUpperCase()}</span>
+                        <span class="log-time">${new Date(log.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                </div>
+            `;
+            
+            container.insertBefore(logEntry, container.firstChild);
+            
+            // Limit to 20 logs
+            if (container.children.length > 20) {
+                container.removeChild(container.lastChild);
+            }
+            
+            // Update notification count for critical logs
+            if (log.severity === 'critical') {
+                updateNotificationCount(1);
+            }
+        }
+        
+        // Pause log stream
+        function pauseLogStream() {
+            isStreaming = false;
+            
+            // Close SSE connection if exists
+            if (window.logEventSource) {
+                window.logEventSource.close();
+                window.logEventSource = null;
+            }
+            
+            // Clear interval
+            if (logStreamInterval) {
+                clearInterval(logStreamInterval);
+                logStreamInterval = null;
+            }
+        }
+        
+        // Clear logs
+        function clearLogs() {
+            const container = document.getElementById('realtime-logs');
+            if (container) {
+                container.innerHTML = '';
+                // Add initial message
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.innerHTML = `
+                    <div class="log-icon" style="color: #17a2b8">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="log-content">
+                        <strong>System</strong> Log stream cleared
+                        <div class="log-meta">
+                            <span class="log-time">${new Date().toLocaleTimeString()}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(logEntry);
+            }
+        }
+        
+        // Check system health
+        async function checkSystemHealth() {
+            const backendStatus = document.getElementById('backend-status');
+            const backendResponse = document.getElementById('backend-response');
+            const dbStatus = document.getElementById('db-status');
+            const dbResponse = document.getElementById('db-response');
+            
+            // Check backend API
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    backendStatus.className = 'status-indicator status-good';
+                    backendResponse.textContent = 'Connected';
+                } else {
+                    backendStatus.className = 'status-indicator status-warning';
+                    backendResponse.textContent = 'Unavailable';
+                }
+            } catch (error) {
+                backendStatus.className = 'status-indicator status-bad';
+                backendResponse.textContent = 'Offline';
+            }
+            
+            // Check database (via API)
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/logs/stats`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        dbStatus.className = 'status-indicator status-good';
+                        dbResponse.textContent = 'Connected';
+                    } else {
+                        dbStatus.className = 'status-indicator status-warning';
+                        dbResponse.textContent = 'Issues detected';
+                    }
+                } catch (error) {
+                    dbStatus.className = 'status-indicator status-bad';
+                    dbResponse.textContent = 'Offline';
+                }
+            }
+        }
+        
+        // Load notifications
+        async function loadNotifications() {
+            const token = localStorage.getItem('token');
+            const countElement = document.getElementById('notification-count');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard/alerts`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        updateNotificationCount(data.summary?.requiringAction || 0);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load notifications:', error);
+            }
+            
+            // Mock notifications
+            updateNotificationCount(3);
+        }
+        
+        // Update notification count
+        function updateNotificationCount(count) {
+            const element = document.getElementById('notification-count');
+            if (element) {
+                element.textContent = count;
+                element.style.display = count > 0 ? 'block' : 'none';
+            }
+        }
+        
+        // Show notifications modal
+        function showNotifications() {
+            const modal = document.getElementById('notifications-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                loadNotificationsList();
+            }
+        }
+        
+        // Close notifications modal
+        function closeNotifications() {
+            const modal = document.getElementById('notifications-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+        
+        // Load notifications list
+        function loadNotificationsList() {
+            const container = document.getElementById('notifications-list');
+            if (!container) return;
+            
+            const notifications = [
+                {
+                    id: 1,
+                    type: 'critical',
+                    title: 'Critical XSS Attack Detected',
+                    message: 'Multiple XSS attempts from 192.168.1.105',
+                    time: '5 minutes ago',
+                    read: false
+                },
+                {
+                    id: 2,
+                    type: 'warning',
+                    title: 'System Update Available',
+                    message: 'Security patch v2.1.4 is ready to install',
+                    time: '1 hour ago',
+                    read: false
+                },
+                {
+                    id: 3,
+                    type: 'info',
+                    title: 'Weekly Report Generated',
+                    message: 'Security analytics report for last week is ready',
+                    time: '2 hours ago',
+                    read: true
+                }
+            ];
+            
+            container.innerHTML = notifications.map(notification => `
+                <div class="notification-item ${notification.read ? 'read' : 'unread'}">
+                    <i class="fas fa-${notification.type === 'critical' ? 'exclamation-circle' : notification.type === 'warning' ? 'exclamation-triangle' : 'info-circle'} 
+                       ${notification.type === 'critical' ? 'text-danger' : notification.type === 'warning' ? 'text-warning' : 'text-info'}"></i>
+                    <div class="notification-content">
+                        <div class="notification-title">${notification.title}</div>
+                        <div class="notification-message">${notification.message}</div>
+                        <div class="notification-time">${notification.time}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Mark all notifications as read
+        function markAllAsRead() {
+            updateNotificationCount(0);
+            showNotification('All notifications marked as read', 'success');
+        }
+        
+        // Refresh profile
+        function refreshProfile() {
+            fetchUserDetails();
+            showNotification('Profile refreshed', 'info');
+        }
+        
+        // Load mock data (fallback)
+        function loadMockData() {
+            loadLocalStats();
+            loadMockAttackTrends();
+            loadMockTopAttackers();
+            renderStaticAttackMap();
+            startMockLogStream();
+        }
+        
+        // Logout function
+        function logout() {
+            // Clear local storage
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            
+            // Stop any active streams
+            pauseLogStream();
+            
+            // Redirect to login
+            window.location.href = 'login.html';
+        }
+        
+        // Helper functions
+        function generateIP() {
+            return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+        }
+        
+        function getSeverityColor(severity) {
+            const colors = {
+                'critical': '#dc3545',
+                'high': '#fd7e14',
+                'medium': '#ffc107',
+                'low': '#28a745',
+                'info': '#17a2b8'
+            };
+            return colors[severity.toLowerCase()] || '#6c757d';
+        }
+        
+        function getAttackTypeIcon(attackType) {
+            const icons = {
+                'XSS': 'fa-code',
+                'SQL Injection': 'fa-database',
+                'Port Scan': 'fa-search',
+                'Brute Force': 'fa-key',
+                'DDoS': 'fa-broadcast-tower',
+                'Malware': 'fa-virus',
+                'default': 'fa-exclamation-triangle'
+            };
+            return icons[attackType] || icons['default'];
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+            return date.toLocaleDateString();
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Use existing notification function from app.js if available
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(message, type);
+            } else {
+                // Simple fallback
+                alert(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+        
+        function updateThemeIcon() {
+            const themeIcon = document.getElementById('theme-icon');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            if (themeIcon) {
+                themeIcon.className = currentTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        
+        // Add CSS for new components
+        const style = document.createElement('style');
+        style.textContent = `
+            .health-metrics {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .health-metric {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .health-metric:last-child {
+                border-bottom: none;
+            }
+            
+            .metric-label {
+                font-weight: 500;
+                color: var(--text-primary);
+            }
+            
+            .metric-value {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 14px;
+            }
+            
+            .status-indicator {
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: var(--text-secondary);
+            }
+            
+            .status-indicator.status-good {
+                background: var(--success-color);
+            }
+            
+            .status-indicator.status-warning {
+                background: var(--warning-color);
+            }
+            
+            .status-indicator.status-bad {
+                background: var(--danger-color);
+            }
+            
+            .health-actions {
+                margin-top: 15px;
+                text-align: center;
+            }
+            
+            .profile-info {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .avatar-large {
+                width: 60px;
+                height: 60px;
+                background: var(--primary-color);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                color: white;
+            }
+            
+            .profile-details {
+                flex: 1;
+            }
+            
+            .profile-details h4 {
+                margin-bottom: 5px;
+                color: var(--text-primary);
+            }
+            
+            .profile-details p {
+                margin: 3px 0;
+                color: var(--text-secondary);
+                font-size: 14px;
+            }
+            
+            .notification-item {
+                display: flex;
+                align-items: flex-start;
+                padding: 10px;
+                border-bottom: 1px solid var(--border-color);
+                cursor: pointer;
+            }
+            
+            .notification-item:last-child {
+                border-bottom: none;
+            }
+            
+            .notification-item.unread {
+                background: var(--bg-secondary);
+            }
+            
+            .notification-item i {
+                margin-top: 3px;
+                margin-right: 10px;
+                font-size: 18px;
+            }
+            
+            .notification-content {
+                flex: 1;
+            }
+            
+            .notification-title {
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: 3px;
+            }
+            
+            .notification-message {
+                font-size: 13px;
+                color: var(--text-secondary);
+                margin-bottom: 5px;
+            }
+            
+            .notification-time {
+                font-size: 11px;
+                color: var(--text-tertiary);
+            }
+            
+            .log-controls {
+                display: flex;
+                gap: 5px;
+            }
+            
+            .chart-container {
+                position: relative;
+                height: 100%;
+            }
+            
+            .text-danger { color: #dc3545; }
+            .text-warning { color: #ffc107; }
+            .text-info { color: #17a2b8; }
+            .text-success { color: #28a745; }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
