@@ -1,6 +1,6 @@
 🛡️ Red Ranger’s MicroSOC Command Center
 
-A mini Security Operations Center (SOC) platform designed to simulate real-time cyber attack monitoring and analysis. This project provides a hands-on experience of how security analysts track, visualize, and respond to cyber threats.
+A mini Security Operations Center (SOC) platform designed to simulate real-time cyber attack monitoring and analysis.This project provides a hands-on experience of how security analysts track, visualize, and respond to cyber threats.
 
 🚀 Features
 🔐 Secure Authentication
