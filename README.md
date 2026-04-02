@@ -23,3 +23,5 @@ Backend: Node.js, Express.js
 Database: MongoDB
 Version Control: Git & GitHub
 Tools: VS Code
+
+Contributors: Honey Tiwari & Mahak Garg
